@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+  <meta name="msapplication-tap-highlight" content="no"/>
+  <title>Hello World</title>
+</head>
+<body>
+<div class="app">
+  <img id="image" style="position:absolute; top:10px; left:10px" src="" />
+
+  <h1>Google+</h1>
+
+  <div id="deviceready" class="blink">
+    <p class="event listening">Connecting to Device</p>
+    <p class="event received">Device is Ready</p>
+
+    <p id="feedback">not logged in</p>
+    <button onclick="isAvailable()">Available?</button>
+    <br/><br/>
+    <button onclick="login()">Login with Google+</button>
+    <br/><br/>
+    <button onclick="trySilentLogin()">Try silent login with Google+</button>
+    <br/><br/>
+    <button onclick="logout()">Logout</button>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="disconnect()">Disconnect</button>
+    <br/><br/>
+  </div>
+</div>
+
+	<link href="lib/ionic/css/ionic.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+    <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
+    <link href="css/ionic.app.css" rel="stylesheet">
+    -->
+
+    <!-- ionic/angularjs js -->
+    <script src="lib/ionic/js/ionic.bundle.js"></script>
+
+    <!-- cordova script (this will be a 404 during development) 
+    <script src="lib/cordova.js"></script>-->
+	
+<script type="text/javascript">
+
+.controller('TestCtrl', function($scope,$ionicPopup) {
+$scope.logged_in = false;
+$scope.getMember = function(id) {
+    console.log(id);
+};
+$scope.test = function(){
+    $ionicPopup.alert({"title":"Clicked"});
+}
+
+$scope.call_google = function(){
+    googleapi.authorize({
+    client_id: 'CLIENT_ID',
+    client_secret: 'CLIENT_SECRET',
+    redirect_uri: 'http://localhost',
+    scope: 'https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/userinfo.email'
+    }).done(function(data) {
+        accessToken=data.access_token;
+        // alert(accessToken);
+        // $loginStatus.html('Access Token: ' + data.access_token);
+        console.log(data.access_token);
+        //$ionicPopup.alert({"title":JSON.stringify(data)});
+        $scope.getDataProfile();
+    });
+};
+$scope.getDataProfile = function(){
+    var term=null;
+    //  alert("getting user data="+accessToken);
+    $.ajax({
+           url:'https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token='+accessToken,
+           type:'GET',
+           data:term,
+           dataType:'json',
+           error:function(jqXHR,text_status,strError){
+           },
+           success:function(data)
+           {
+           var item;
+
+           console.log(JSON.stringify(data));
+           // Save the userprofile data in your localStorage.
+           window.localStorage.gmailLogin="true";
+           window.localStorage.gmailID=data.id;
+           window.localStorage.gmailEmail=data.email;
+           window.localStorage.gmailFirstName=data.given_name;
+           window.localStorage.gmailLastName=data.family_name;
+           window.localStorage.gmailProfilePicture=data.picture;
+           window.localStorage.gmailGender=data.gender;
+           window.localStorage.gmailName=data.name;
+           $scope.email = data.email;
+           $scope.name = data.name;
+           }
+        });
+        //$scope.disconnectUser(); //This call can be done later.
+};
+$scope.disconnectUser = function() {
+  var revokeUrl = 'https://accounts.google.com/o/oauth2/revoke?token='+accessToken;
+
+  // Perform an asynchronous GET request.
+  $.ajax({
+    type: 'GET',
+    url: revokeUrl,
+    async: false,
+    contentType: "application/json",
+    dataType: 'jsonp',
+    success: function(nullResponse) {
+      // Do something now that user is disconnected
+      // The response is always undefined.
+      accessToken=null;
+      console.log(JSON.stringify(nullResponse));
+      console.log("-----signed out..!!----"+accessToken);
+    },
+    error: function(e) {
+      // Handle the error
+      // console.log(e);
+      // You could point users to manually disconnect if unsuccessful
+      // https://plus.google.com/apps
+    }
+  });
+};
+})
+
+
+</script>
+</body>
+</html>
